@@ -1,0 +1,28 @@
+{
+  "files.exclude": {
+    "node_modules": true,
+    "dist": true,
+    "**/.DS_Store": true
+  },
+  "search.exclude": {
+    "node_modules": true,
+    "dist": true,
+    "**/.map": true
+  },
+  "editor.formatOnSave": false,
+  "editor.tabSize": 4,
+  "files.eol": "\n",
+  "[javascript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[json]": {
+    "editor.tabSize": 2
+  },
+  "[scss]": {
+    "editor.tabSize": 2
+  },
+  "typescript.tsdk": "server/node_modules/typescript/lib"
+}

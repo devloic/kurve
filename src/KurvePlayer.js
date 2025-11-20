@@ -36,6 +36,10 @@ Kurve.Player = function(id, keyLeft, keyRight, keySuperpower) {
         points++;
     };
 
+    this.setPoints = function(newPoints) {
+        points = newPoints;
+    };
+
     this.setSuperpower = function(newSuperpower) {
         superpower = newSuperpower;
 
@@ -48,10 +52,13 @@ Kurve.Player = function(id, keyLeft, keyRight, keySuperpower) {
 
     this.setColor = function(newColor) { color = newColor; };
     this.setIsActive = function(newIsActive) { isActive = newIsActive; };
-    
+
     this.getPoints = function() { return points; };
     this.getId = function() { return id; };
-    this.getColor = function() { return color === null ? Kurve.Theming.getThemedValue('players', id) : color };
+    this.getColor = function() {
+        // Always return the explicitly set color first, or fallback to default
+        return color !== null ? color : (Kurve.Theming.getThemedValue('players', id) || '#3498db');
+    };
     this.getSuperpower = function() { return superpower; };
     this.getKeyLeft = function() { return keyLeft; };
     this.getKeyRight = function() { return keyRight; };
@@ -80,15 +87,48 @@ Kurve.Player.prototype.renderMenuItem = function() {
 };
 
 Kurve.Player.prototype.renderScoreItem = function() {
+    const displayName = this.nickname || this.getId();
+    const isLocal = this.isLocal || false;
+    const playerColor = this.getColor();
+    const colorSquare = '<span style="display: inline-block; width: 16px; height: 16px; background-color: ' + playerColor + '; margin-right: 8px; vertical-align: middle; border: 1px solid #fff;"></span>';
+    const remoteLabel = isLocal ? '' : ' <span style="color: #95a5a6;">Remote</span>';
+    const keysDisplay = isLocal ? '<div class="keys">' + this.renderKeys() + '</div>' : '';
+
     return  '<div class="active ' + this.getId() + '">' +
-                '<div class="title"><h2>' + this.getId() + '</h2></div>' +
-                '<div class="points">' + this.getPoints() + '</div>' +
+                '<div class="title"><h2>' + colorSquare + displayName + '</h2></div>' +
+                '<div class="points">' + this.getPoints() + remoteLabel + '</div>' +
                 '<div class="clear"></div>' +
+                keysDisplay +
                 '<div class="superpowers">' +
                     this.renderNumberOfSuperPowers() +
                     '<span class="superpower-label">' + this.getSuperpower().getLabel() + '</span>' +
                 '</div>' +
             '</div>';
+};
+
+Kurve.Player.prototype.renderKeys = function() {
+    return  '<span class="key-label">Keys: </span>' +
+            '<span class="key">' + this.getKeyName(this.getKeyLeft()) + '</span> ' +
+            '<span class="key">' + this.getKeyName(this.getKeyRight()) + '</span> ' +
+            '<span class="key">' + this.getKeyName(this.getKeySuperpower()) + '</span>';
+};
+
+Kurve.Player.prototype.getKeyName = function(keyCode) {
+    const keyMap = {
+        // Letters
+        65: 'A', 66: 'B', 67: 'C', 68: 'D', 69: 'E', 70: 'F', 71: 'G', 72: 'H',
+        73: 'I', 74: 'J', 75: 'K', 76: 'L', 77: 'M', 78: 'N', 79: 'O', 80: 'P',
+        81: 'Q', 82: 'R', 83: 'S', 84: 'T', 85: 'U', 86: 'V', 87: 'W', 88: 'X',
+        89: 'Y', 90: 'Z',
+        // Arrow keys
+        37: '←', 38: '↑', 39: '→', 40: '↓',
+        // Numpad
+        96: 'Num0', 97: 'Num1', 98: 'Num2', 99: 'Num3', 100: 'Num4',
+        101: 'Num5', 102: 'Num6', 103: 'Num7', 104: 'Num8', 105: 'Num9',
+        // Special
+        32: 'Space', 188: ',', 190: '.'
+    };
+    return keyMap[keyCode] || keyCode;
 };
 
 Kurve.Player.prototype.renderNumberOfSuperPowers = function() {

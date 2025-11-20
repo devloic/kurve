@@ -8,16 +8,26 @@
   },
   "author": "Markus Mächler",
   "license": "GPL3",
+  "scripts": {
+    "build": "node build.js",
+    "build:dev": "node build.js",
+    "watch": "node build.js watch",
+    "serve": "node dev-server.js",
+    "server": "cd server && npm run dev",
+    "setup": "npm install && cd server && npm install && cd ..",
+    "dev": "concurrently \"npm run serve\" \"npm run server\" --names \"client,server\" --prefix-colors \"cyan,magenta\" --kill-others",
+    "start": "npm run dev",
+    "launch": "npm run build:dev && npm run dev",
+    "restart": "./restart.sh"
+  },
   "devDependencies": {
-    "gulp": "^4.0.2",
-    "gulp-concat-util": "^0.5.5",
-    "gulp-sass": "^5.1.0",
-    "gulp-sourcemaps": "^3.0.0",
-    "gulp-uglify": "^3.0.2",
-    "gulp-watch": "^5.0.1",
+    "browserify": "^17.0.1",
+    "concurrently": "^8.2.0",
     "sass": "^1.54.5"
   },
   "dependencies": {
+    "buffer": "^6.0.3",
+    "colyseus.js": "^0.15.28",
     "pixi.js": "^6.5.1"
   }
 }

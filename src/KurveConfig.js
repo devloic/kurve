@@ -34,14 +34,14 @@ Kurve.Config = {
     
     Field: {
         defaultColor: '#333333',
-        defaultLineWidth: 4,
+        defaultLineWidth: 6,
         borderColor: '#ACAC9D',
         width: 0.7, //70% percent of the screen
     },
-    
+
     Curve: {
         stepLength: 1.4,
-        lineWidth: 4,
+        lineWidth: 6,
         dAngle: 0.035,
         holeInterval: 150,
         holeIntervalRandomness: 300,

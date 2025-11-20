@@ -62,7 +62,7 @@ var Kurve = {
     },
 
     onUnload: function() {
-        Kurve.Piwik.trackPageView();
+        // Analytics removed
     }
 
 };

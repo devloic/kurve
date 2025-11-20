@@ -83,13 +83,23 @@ Kurve.Curve = function(player, game, field, config, audioPlayer) {
 };
 
 Kurve.Curve.prototype.drawNextFrame = function() {
+    // Remote players don't run physics locally - they're updated from server
+    if (this.isRemote) {
+        return;
+    }
+
     this.moveToNextFrame();
     this.checkForCollision();
     this.drawLine(this.getField());
     this.decrementPowerUpTimeOut();
-    
+
     if ( this.useSuperpower(Kurve.Superpowerconfig.hooks.DRAW_NEXT_FRAME) ) {
         this.getPlayer().getSuperpower().act(Kurve.Superpowerconfig.hooks.DRAW_NEXT_FRAME, this);
+    }
+
+    // Send position update to multiplayer server
+    if (Kurve.Multiplayer && Kurve.Multiplayer.isMultiplayerMode && Kurve.Multiplayer.sessionId) {
+        Kurve.Multiplayer.sendPositionUpdate(this);
     }
 
     if ( Kurve.Config.Debug.curvePosition ) {
@@ -212,9 +222,19 @@ Kurve.Curve.prototype.isWithinSelfCollisionTimeout = function(frameId) {
 };
 
 Kurve.Curve.prototype.die = function() {
+    // Remote players don't die from local collision detection
+    if (this.isRemote) {
+        return;
+    }
+
     this.getPlayer().getSuperpower().getAudioPlayer().pause('all', {reset: true});
     this.getAudioPlayer().play('curve-crashed', {reset: true});
     this.getGame().notifyDeath(this);
+
+    // Notify multiplayer server of death (only for local player)
+    if (Kurve.Multiplayer && Kurve.Multiplayer.isMultiplayerMode) {
+        Kurve.Multiplayer.sendPlayerDied();
+    }
 };
 
 Kurve.Curve.prototype.computeNewAngle = function() {

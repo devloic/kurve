@@ -55,6 +55,13 @@
                                 </div>
 
                                 <div id='menu-settings'>
+                                    <div id='nickname-input' style='margin-bottom: 15px;'>
+                                        <label for='player-nickname' style='display: block; margin-bottom: 5px; color: #fff; font-size: 14px;'>Your Nickname:</label>
+                                        <input type='text' id='player-nickname' maxlength='20' placeholder='Enter your name' style='width: 100%; padding: 8px; font-size: 14px; border: 2px solid #fff; background: rgba(0,0,0,0.3); color: #fff; box-sizing: border-box;' />
+                                    </div>
+                                    <div id='multiplayer-toggle' class='button active' onclick='Kurve.Menu.toggleMultiplayerMode()'>
+                                        <span id='multiplayer-mode-label'>Online Game</span>
+                                    </div>
                                     <div id='change-theme' class='button' onclick='Kurve.Theming.toggleTheme()'></div>
                                     <div class='toggle-sound button' onclick='Kurve.Sound.toggleSound()'></div>
                                     <div class='clear'></div>
@@ -168,6 +175,74 @@
             </div>
         </div>
 
-        <script type='text/javascript' src='dist/js/kurve.min.js'></script>
+        <script>
+/**
+ * Browser-compatible Buffer shim for Colyseus
+ */
+'use strict';
+(function(global) {
+    if (typeof global.Buffer !== 'undefined') return;
+
+    function BufferShim(arg, encodingOrOffset, length) {
+        if (typeof arg === 'number') return new Uint8Array(arg);
+        if (typeof arg === 'string') {
+            var arr = [];
+            for (var i = 0; i < arg.length; i++) arr.push(arg.charCodeAt(i) & 0xff);
+            return new Uint8Array(arr);
+        }
+        if (arg instanceof ArrayBuffer || ArrayBuffer.isView(arg)) {
+            return new Uint8Array(arg, encodingOrOffset, length);
+        }
+        if (Array.isArray(arg)) return new Uint8Array(arg);
+        return new Uint8Array(0);
+    }
+
+    BufferShim.isBuffer = function(obj) {
+        return obj instanceof Uint8Array || (obj && obj.constructor && obj.constructor.name === 'Uint8Array');
+    };
+    BufferShim.from = function(value, encodingOrOffset, length) {
+        return BufferShim(value, encodingOrOffset, length);
+    };
+    BufferShim.alloc = function(size, fill) {
+        var buf = new Uint8Array(size);
+        if (fill !== undefined && typeof fill === 'number') buf.fill(fill);
+        return buf;
+    };
+    BufferShim.allocUnsafe = function(size) { return new Uint8Array(size); };
+    BufferShim.allocUnsafeSlow = function(size) { return new Uint8Array(size); };
+    BufferShim.concat = function(list, totalLength) {
+        if (!Array.isArray(list)) throw new TypeError('list must be an array');
+        if (list.length === 0) return new Uint8Array(0);
+        var length = totalLength === undefined ? 0 : totalLength;
+        if (totalLength === undefined) {
+            for (var i = 0; i < list.length; i++) length += list[i].length;
+        }
+        var buffer = new Uint8Array(length);
+        var pos = 0;
+        for (var i = 0; i < list.length; i++) {
+            buffer.set(list[i], pos);
+            pos += list[i].length;
+            if (pos >= length) break;
+        }
+        return buffer;
+    };
+    BufferShim.byteLength = function(string) {
+        return typeof string === 'string' ? string.length : string.length;
+    };
+    BufferShim.compare = function(a, b) {
+        for (var i = 0; i < Math.min(a.length, b.length); i++) {
+            if (a[i] !== b[i]) return a[i] < b[i] ? -1 : 1;
+        }
+        return a.length - b.length;
+    };
+
+    global.Buffer = BufferShim;
+    if (!global.global) global.global = global;
+    if (!global.process) global.process = { browser: true, env: {}, version: '', versions: {} };
+    else if (!global.process.browser) global.process.browser = true;
+})(window);
+        </script>
+        <script type='text/javascript' src='http://localhost:2568/lib/colyseus.js'></script>
+        <script type='text/javascript' src='dist/js/kurve.js'></script>
     </body>
 </html>

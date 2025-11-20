@@ -82,10 +82,20 @@ Kurve.Game = {
         }
 
         this.keysDown[event.keyCode] = true;
+
+        // Send key event to multiplayer server
+        if (Kurve.Multiplayer && Kurve.Multiplayer.isMultiplayerMode) {
+            Kurve.Multiplayer.sendKeyDown(event.keyCode);
+        }
     },
-    
+
     onKeyUp: function(event) {
         delete this.keysDown[event.keyCode];
+
+        // Send key event to multiplayer server
+        if (Kurve.Multiplayer && Kurve.Multiplayer.isMultiplayerMode) {
+            Kurve.Multiplayer.sendKeyUp(event.keyCode);
+        }
     },
     
     isKeyDown: function(keyCode) {
@@ -94,8 +104,24 @@ Kurve.Game = {
     
     onSpaceDown: function() {
         if ( this.isGameOver ) return location.reload();
-        if ( this.isRunning || this.isPaused ) return this.togglePause();
-        if ( !this.isRoundStarted && !this.deathMatch) return this.startNewRound();
+        if ( this.isRunning || this.isPaused ) {
+            this.togglePause();
+            if (Kurve.Multiplayer && Kurve.Multiplayer.isMultiplayerMode) {
+                Kurve.Multiplayer.sendPauseGame();
+            }
+            return;
+        }
+
+        if ( !this.isRoundStarted && !this.deathMatch) {
+            if (Kurve.Multiplayer && Kurve.Multiplayer.isMultiplayerMode) {
+                Kurve.Multiplayer.sendStartRound();
+                Kurve.Lightbox.hide();
+            } else {
+                this.startNewRound();
+            }
+            return;
+        }
+
         if ( !this.isRoundStarted && this.deathMatch) return this.startDeathMatch();
     },
     
@@ -132,10 +158,6 @@ Kurve.Game = {
         this.addWindowListeners();
         this.renderPlayerScores();
 
-        Kurve.Piwik.trackPageVariable(1, 'theme', Kurve.Theming.currentTheme);
-        Kurve.Piwik.trackPageVariable(2, 'number_of_players', this.players.length);
-        Kurve.Piwik.trackPageView('Game');
-        
         this.startNewRound.bind(this);
     },
     
@@ -181,8 +203,14 @@ Kurve.Game = {
             if ( Object.keys(this.runningCurves).length === 2 ) {
                 this.Audio.tension();
             }
-        
-            if ( Object.keys(this.runningCurves).length === 1 ) this.terminateRound();
+
+            // In multiplayer mode, let the server decide when to end the round
+            // In single player mode, end the round locally when only one player remains
+            if ( Object.keys(this.runningCurves).length === 1 ) {
+                if (!Kurve.Multiplayer || !Kurve.Multiplayer.isMultiplayerMode) {
+                    this.terminateRound();
+                }
+            }
         }
     },
     
@@ -289,7 +317,6 @@ Kurve.Game = {
     },
     
     startDeathMatch: function(winners) {
-        Kurve.Piwik.trackPageVariable(3, 'death_match', 'yes');
         Kurve.Lightbox.hide();
         this.startNewRound();
     },
@@ -298,8 +325,6 @@ Kurve.Game = {
         this.isGameOver = true;
 
         this.Audio.gameOver();
-        Kurve.Piwik.trackPageVariable(4, 'finished_game', 'yes');
-        Kurve.Piwik.trackPageView('GameOver');
 
         Kurve.Lightbox.show(
             '<h1 class="active ' + winner.getId() + '">' + winner.getId() + ' wins!</h1>' +

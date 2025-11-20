@@ -25,16 +25,48 @@
 'use strict';
 
 Kurve.Menu = {
-    
+
     boundOnKeyDown: null,
     audioPlayer: null,
     scrollKeys: ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Spacebar', ' '],
-    
+    isMultiplayerMode: true,
+
     init: function() {
         this.initPlayerMenu();
         this.addWindowListeners();
         this.addMouseListeners();
         this.initMenuMusic();
+        this.initNicknameInput();
+
+        // Initialize multiplayer
+        if (Kurve.Multiplayer) {
+            Kurve.Multiplayer.init();
+        }
+    },
+
+    initNicknameInput: function() {
+        const nicknameInput = document.getElementById('player-nickname');
+        if (!nicknameInput) return;
+
+        // Load saved nickname
+        const savedNickname = Kurve.Storage.get('kurve.player-nickname');
+        if (savedNickname) {
+            nicknameInput.value = savedNickname;
+        }
+
+        // Save nickname on change
+        nicknameInput.addEventListener('input', function() {
+            const nickname = nicknameInput.value.trim();
+            if (nickname) {
+                Kurve.Storage.set('kurve.player-nickname', nickname);
+            }
+        });
+    },
+
+    getPlayerNickname: function() {
+        const nicknameInput = document.getElementById('player-nickname');
+        const nickname = nicknameInput ? nicknameInput.value.trim() : '';
+        return nickname || 'Player';
     },
         
     initPlayerMenu: function() {
@@ -101,15 +133,38 @@ Kurve.Menu = {
         });
     },
     
-    onSpaceDown: function() {
+    onSpaceDown: async function() {
+        // Handle multiplayer mode
+        if (Kurve.Menu.isMultiplayerMode) {
+            const success = await Kurve.Multiplayer.joinGame();
+            if (!success) {
+                return; // Connection failed
+            }
+
+            Kurve.Field.init();
+            Kurve.Menu.audioPlayer.pause('menu-music', {fade: 1000});
+            Kurve.Game.maxPoints = Kurve.Multiplayer.room.state.maxPoints;
+            Kurve.Game.renderPlayerScores();
+            Kurve.Game.addWindowListeners();
+
+            u.addClass('hidden', 'layer-menu');
+            u.removeClass('hidden', 'layer-game');
+
+            // Show initial waiting message with player count
+            Kurve.Multiplayer.updateWaitingMessage();
+
+            return;
+        }
+
+        // Local multiplayer mode (original logic)
         Kurve.players.forEach(function(player) {
             if ( player.isActive() ) {
                 Kurve.Game.curves.push(
                     new Kurve.Curve(player, Kurve.Game, Kurve.Field, Kurve.Config.Curve, Kurve.Sound.getAudioPlayer())
-                );    
+                );
             }
         });
-        
+
         if (Kurve.Game.curves.length <= 1) {
             Kurve.Game.curves = [];
             Kurve.Menu.audioPlayer.play('menu-error', {reset: true});
@@ -214,4 +269,21 @@ Kurve.Menu = {
     requestFullScreen: function() {
         document.body.webkitRequestFullScreen();
     },
+
+    toggleMultiplayerMode: function() {
+        this.isMultiplayerMode = !this.isMultiplayerMode;
+
+        const label = document.getElementById('multiplayer-mode-label');
+        const toggle = document.getElementById('multiplayer-toggle');
+
+        if (this.isMultiplayerMode) {
+            label.textContent = 'Online Game';
+            u.addClass('active', 'multiplayer-toggle');
+        } else {
+            label.textContent = 'Local Game';
+            u.removeClass('active', 'multiplayer-toggle');
+        }
+
+        this.audioPlayer.play('menu-navigate');
+    }
 };
