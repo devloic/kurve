@@ -1,3 +1,9 @@
+# fork of https://github.com/maechler/kurve
+
+### adding remote multiplayer with colyseus
+### work in progress
+
+------
 # Achtung, die Kurve!
 This is an open source HTML5 implementation of the famous game also known as Curve Fever, Zatacka or simply Kurve.
 
