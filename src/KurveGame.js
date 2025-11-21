@@ -81,6 +81,15 @@ Kurve.Game = {
             this.onSpaceDown();
         }
 
+        // F key (keyCode 70) toggles fullscreen
+        if ( event.keyCode === 70 ) {
+            if (!document.fullscreenElement) {
+                document.body.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
         this.keysDown[event.keyCode] = true;
 
         // Send key event to multiplayer server
@@ -161,6 +170,21 @@ Kurve.Game = {
 
         this.startNewRound.bind(this);
     },
+
+
+    redrawUI: function() {
+
+
+
+        // Re-initialize the field and redraw the player scores
+        // This is useful when the window is resized between rounds
+        if (Kurve.Multiplayer && Kurve.Multiplayer.isMultiplayerMode) {
+            // In multiplayer, request new field size from server
+           Kurve.Multiplayer.sendScreenSize();
+        }
+        Kurve.Field.resize();
+        Kurve.Field.drawField();
+    },
     
     renderPlayerScores: function() {
         var playerHTML  = '';
@@ -171,8 +195,11 @@ Kurve.Game = {
         // Add version number at the bottom
         playerHTML += '<div style="text-align: center; margin-top: 20px; font-size: 32px; font-weight: bold; color: #95a5a6;">' + Kurve.Config.version + '</div>';
 
+
         this.playerScoresElement.innerHTML = playerHTML;
     },
+
+
 
     applyDebugFreezeState: function() {
         // Apply freeze state from menu checkbox to local player
@@ -280,9 +307,14 @@ Kurve.Game = {
         this.incrementSuperpowers();
         this.Audio.terminateRound();
 
-        // Only resize field in local mode, not in multiplayer where server controls field size
+        // Handle field resizing between rounds
         if (!Kurve.Multiplayer || !Kurve.Multiplayer.isMultiplayerMode) {
+            // Local mode: resize field to current window size
             Kurve.Field.resize();
+        } else {
+            // Multiplayer mode: send current screen size to server
+            // This allows field to adjust if players resized their windows during the round
+            Kurve.Multiplayer.sendScreenSize();
         }
 
         this.checkForWinner();

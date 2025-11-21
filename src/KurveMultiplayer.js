@@ -193,6 +193,11 @@ Kurve.Multiplayer = {
         });
 
         this.room.onMessage('countdown', (message) => {
+            // Redraw UI at the start of countdown (first tick)
+            if (message.count === 3) {
+                Kurve.Game.redrawUI();
+            }
+
             // Find local player
             const localPlayer = Kurve.Game.players.find(p => p.isLocal);
 
@@ -324,7 +329,7 @@ Kurve.Multiplayer = {
 
                 content += '<p style="margin-top: 20px; font-size: 20px;">Press <strong>SPACE</strong> to start next round</p>';
                 Kurve.Lightbox.show(content);
-            }, 1000);
+            }, 500);
         });
 
         this.room.onMessage('gameOver', (message) => {

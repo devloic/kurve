@@ -62,11 +62,21 @@ Kurve.Field = {
 
     initWindow: function() {
         window.addEventListener('resize', function() {
+            // Always refresh player scores on resize
+            Kurve.Game.renderPlayerScores();
+
             if (Kurve.Game.isRoundStarted) {
-                return; // Do not allow resize during a round
+                return; // Do not allow field resize during a round
             }
 
-            this.resize();
+            // In multiplayer mode, send new screen size to server
+            if (Kurve.Multiplayer && Kurve.Multiplayer.isMultiplayerMode) {
+                Kurve.Multiplayer.sendScreenSize();
+                // Server will recalculate and broadcast new field size
+            } else {
+                // In local mode, just resize locally
+                this.resize();
+            }
         }.bind(this));
     },
 

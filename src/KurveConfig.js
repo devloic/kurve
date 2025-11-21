@@ -26,7 +26,7 @@
 
 Kurve.Config = {
 
-    version: 'v6',
+    version: 'v9',
 
     Debug: {
         curvePosition: false,
@@ -37,7 +37,7 @@ Kurve.Config = {
     Field: {
         defaultColor: '#333333',
         defaultLineWidth: 6,
-        borderColor: '#ACAC9D',
+        borderColor: '#FF0000',
         width: 0.7, //70% percent of the screen
     },
 
@@ -87,7 +87,7 @@ Kurve.Config = {
             field: {
                 backgroundColor: '#EBE7DC',
                 defaultColor: '#333333',
-                borderColor: '#ACAC9D',
+                borderColor: '#FF0000',
                 deathMatchColor: '#333333',
             },
             player: {
@@ -106,7 +106,7 @@ Kurve.Config = {
             field: {
                 backgroundColor: '#222222',
                 defaultColor: '#DDDDDD',
-                borderColor: '#999999',
+                borderColor: '#FF0000',
                 deathMatchColor: '#DDDDDD',
             },
             player: {
