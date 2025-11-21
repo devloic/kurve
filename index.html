@@ -59,6 +59,12 @@
                                         <label for='player-nickname' style='display: block; margin-bottom: 5px; color: #fff; font-size: 14px;'>Your Nickname:</label>
                                         <input type='text' id='player-nickname' maxlength='20' placeholder='Enter your name' style='width: 100%; padding: 8px; font-size: 14px; border: 2px solid #fff; background: rgba(0,0,0,0.3); color: #fff; box-sizing: border-box;' />
                                     </div>
+                                    <div id='debug-freeze' style='margin-bottom: 15px;'>
+                                        <label style='display: flex; align-items: center; color: #fff; font-size: 14px; cursor: pointer;'>
+                                            <input type='checkbox' id='debug-freeze-checkbox' style='margin-right: 8px; width: 18px; height: 18px; cursor: pointer;' />
+                                            <span>Debug: Freeze Player (for testing)</span>
+                                        </label>
+                                    </div>
                                     <div id='multiplayer-toggle' class='button active' onclick='Kurve.Menu.toggleMultiplayerMode()'>
                                         <span id='multiplayer-mode-label'>Online Game</span>
                                     </div>

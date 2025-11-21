@@ -26,6 +26,8 @@
 
 Kurve.Config = {
 
+    version: 'v6',
+
     Debug: {
         curvePosition: false,
         curveTrace: false,

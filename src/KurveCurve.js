@@ -88,6 +88,11 @@ Kurve.Curve.prototype.drawNextFrame = function() {
         return;
     }
 
+    // Skip movement if player is frozen (debug mode)
+    if (this.getPlayer().isFrozen && this.getPlayer().isFrozen()) {
+        return;
+    }
+
     this.moveToNextFrame();
     this.checkForCollision();
     this.drawLine(this.getField());
@@ -100,6 +105,11 @@ Kurve.Curve.prototype.drawNextFrame = function() {
     // Send position update to multiplayer server
     if (Kurve.Multiplayer && Kurve.Multiplayer.isMultiplayerMode && Kurve.Multiplayer.sessionId) {
         Kurve.Multiplayer.sendPositionUpdate(this);
+    }
+
+    // Update viewport scrolling for local player
+    if (Kurve.Multiplayer && Kurve.Multiplayer.isMultiplayerMode && this === Kurve.Multiplayer.localPlayerCurve) {
+        Kurve.Field.updateScroll(this.getPositionX(), this.getPositionY());
     }
 
     if ( Kurve.Config.Debug.curvePosition ) {

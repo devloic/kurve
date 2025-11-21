@@ -77,6 +77,9 @@ Kurve.Multiplayer = {
             this.setupRoomListeners();
             this.isMultiplayerMode = true;
 
+            // Send screen size to server
+            this.sendScreenSize();
+
             return true;
         } catch (e) {
             console.error('Failed to join game:', e);
@@ -236,6 +239,9 @@ Kurve.Multiplayer = {
                 Kurve.Game.CURRENT_FRAME_ID = 0;
                 Kurve.Field.clearFieldContent();
 
+                let localPlayerX = null;
+                let localPlayerY = null;
+
                 // Initialize all curves with server-provided positions
                 Kurve.Game.curves.forEach((curve) => {
                     const playerId = curve.getPlayer().getId();
@@ -258,11 +264,27 @@ Kurve.Multiplayer = {
                     if (serverState) {
                         curve.setPosition(serverState.positionX, serverState.positionY);
                         curve.setAngle(serverState.angle);
+
+                        // Save local player's position for viewport centering
+                        if (curve === this.localPlayerCurve) {
+                            localPlayerX = serverState.positionX;
+                            localPlayerY = serverState.positionY;
+                            console.log('Local player starting position:', localPlayerX, localPlayerY);
+                        }
                     }
 
                     curve.getPlayer().getSuperpower().init(curve);
                     curve.drawCurrentPosition(Kurve.Field);
                 });
+
+                // Center viewport on local player AFTER all curves are initialized
+                if (localPlayerX !== null && localPlayerY !== null) {
+                    console.log('Field dimensions:', Kurve.Field.width, 'x', Kurve.Field.height);
+                    console.log('Viewport dimensions:', Kurve.Field.viewportWidth, 'x', Kurve.Field.viewportHeight);
+                    console.log('Needs scroll:', Kurve.Field.needsScroll);
+                    Kurve.Field.centerOnPosition(localPlayerX, localPlayerY);
+                    console.log('Viewport centered at scroll position:', Kurve.Field.scrollX, ',', Kurve.Field.scrollY);
+                }
 
                 Kurve.Game.renderPlayerScores();
                 setTimeout(() => {
@@ -333,6 +355,11 @@ Kurve.Multiplayer = {
         this.room.onMessage('startError', (message) => {
             alert(message.message);
         });
+
+        this.room.onMessage('setFieldSize', (message) => {
+            console.log('Received field size from server:', message.width, 'x', message.height);
+            Kurve.Field.setFixedSize(message.width, message.height);
+        });
     },
 
     updateWaitingMessage: function() {
@@ -400,6 +427,13 @@ Kurve.Multiplayer = {
         // Store nickname for display and server's player ID for color mapping
         localPlayer.nickname = playerState.nickname;
         localPlayer.serverPlayerId = playerState.id;
+
+        // Apply debug freeze state from menu checkbox
+        if (Kurve.Menu && Kurve.Menu.getDebugFreezeState) {
+            const freezeState = Kurve.Menu.getDebugFreezeState();
+            localPlayer.setFrozen(freezeState);
+            console.log('Applied debug freeze state to local player:', freezeState);
+        }
         localPlayer.isLocal = true; // Mark as local player
 
         const curve = new Kurve.Curve(
@@ -524,6 +558,15 @@ Kurve.Multiplayer = {
     sendPauseGame: function() {
         if (this.room && this.isMultiplayerMode) {
             this.room.send('pauseGame', {});
+        }
+    },
+
+    sendScreenSize: function() {
+        if (this.room && this.isMultiplayerMode) {
+            const width = window.innerWidth * Kurve.Config.Field.width;
+            const height = window.innerHeight;
+            console.log('Sending screen size to server:', width, 'x', height);
+            this.room.send('screenSize', { width: width, height: height });
         }
     },
 

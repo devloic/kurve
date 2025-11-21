@@ -31,13 +31,22 @@ Kurve.Player = function(id, keyLeft, keyRight, keySuperpower) {
     var superPowerElement = null;
     var isActive = false;
     var color = null;
-    
+    var isFrozen = false;
+
     this.incrementPoints = function() {
         points++;
     };
 
     this.setPoints = function(newPoints) {
         points = newPoints;
+    };
+
+    this.setFrozen = function(frozen) {
+        isFrozen = frozen;
+    };
+
+    this.isFrozen = function() {
+        return isFrozen;
     };
 
     this.setSuperpower = function(newSuperpower) {

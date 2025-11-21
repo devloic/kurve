@@ -25,19 +25,27 @@
 'use strict';
 
 Kurve.Field = {
-    
+
     canvas: null,
     pixiApp: null,
     pixiCurves: null,
     pixiDebug: null,
-    
+
     width: null,
     height: null,
-    
+
     drawnPixels: {},
     drawnPowerUps: {},
     defaultLineWidth: null,
     drawnPixelPrecision: null,
+
+    // Scrolling support
+    viewportWidth: null,
+    viewportHeight: null,
+    scrollX: 0,
+    scrollY: 0,
+    scrollMargin: 150,
+    needsScroll: false,
     
     init: function() {
         this.initWindow();
@@ -110,6 +118,99 @@ Kurve.Field = {
         this.drawField();
     },
 
+    setFixedSize: function(width, height) {
+        // Set the playground size based on server's maximum calculation
+        this.width = width;
+        this.height = height;
+
+        // Viewport is the actual visible area (window size)
+        this.viewportWidth = window.innerWidth * Kurve.Config.Field.width;
+        this.viewportHeight = window.innerHeight;
+
+        // Check if scrolling is needed
+        this.needsScroll = (this.width > this.viewportWidth || this.height > this.viewportHeight);
+
+        if (this.needsScroll) {
+            // Canvas shows only viewport
+            this.canvas.width = this.viewportWidth;
+            this.canvas.height = this.viewportHeight;
+
+            // Resize PIXI renderer to viewport size
+            this.pixiApp.renderer.resize(this.viewportWidth, this.viewportHeight);
+
+            // Setup container for clipping
+            const container = this.canvas.parentElement;
+            container.style.width = this.viewportWidth + 'px';
+            container.style.height = this.viewportHeight + 'px';
+            container.style.overflow = 'hidden';
+            container.style.position = 'relative';
+        } else {
+            // No scrolling - show full field
+            this.canvas.width = this.width;
+            this.canvas.height = this.height;
+
+            // Resize PIXI to full field
+            this.pixiApp.renderer.resize(this.width, this.height);
+        }
+
+        this.drawField();
+    },
+
+    centerOnPosition: function(x, y) {
+        if (!this.needsScroll) return;
+
+        // Center viewport on given position
+        this.scrollX = Math.max(0, Math.min(this.width - this.viewportWidth, x - this.viewportWidth / 2));
+        this.scrollY = Math.max(0, Math.min(this.height - this.viewportHeight, y - this.viewportHeight / 2));
+
+        // Move PIXI stage to show correct area
+        this.pixiApp.stage.x = -this.scrollX;
+        this.pixiApp.stage.y = -this.scrollY;
+    },
+
+    updateScroll: function(playerX, playerY) {
+        if (!this.needsScroll) return;
+
+        // Player position relative to viewport
+        const viewportPlayerX = playerX - this.scrollX;
+        const viewportPlayerY = playerY - this.scrollY;
+
+        let newScrollX = this.scrollX;
+        let newScrollY = this.scrollY;
+
+        // Check if near left edge
+        if (viewportPlayerX < this.scrollMargin && this.scrollX > 0) {
+            newScrollX = Math.max(0, playerX - this.scrollMargin);
+        }
+        // Check if near right edge
+        else if (viewportPlayerX > this.viewportWidth - this.scrollMargin &&
+                 this.scrollX < this.width - this.viewportWidth) {
+            newScrollX = Math.min(this.width - this.viewportWidth,
+                                 playerX - this.viewportWidth + this.scrollMargin);
+        }
+
+        // Check if near top edge
+        if (viewportPlayerY < this.scrollMargin && this.scrollY > 0) {
+            newScrollY = Math.max(0, playerY - this.scrollMargin);
+        }
+        // Check if near bottom edge
+        else if (viewportPlayerY > this.viewportHeight - this.scrollMargin &&
+                 this.scrollY < this.height - this.viewportHeight) {
+            newScrollY = Math.min(this.height - this.viewportHeight,
+                                 playerY - this.viewportHeight + this.scrollMargin);
+        }
+
+        // Apply scroll if changed
+        if (newScrollX !== this.scrollX || newScrollY !== this.scrollY) {
+            this.scrollX = newScrollX;
+            this.scrollY = newScrollY;
+
+            // Move PIXI stage
+            this.pixiApp.stage.x = -this.scrollX;
+            this.pixiApp.stage.y = -this.scrollY;
+        }
+    },
+
     clearFieldContent: function() {
         this.drawnPixels = {};
         this.drawnPowerUps = {};
@@ -122,7 +223,7 @@ Kurve.Field = {
         var borderColor = u.stringToHex(Kurve.Theming.getThemedValue('field', 'borderColor'));
 
         this.pixiField.clear();
-        this.pixiField.lineStyle(2, borderColor);
+        this.pixiField.lineStyle(10, borderColor);
         this.pixiField.drawRect(0, 0, this.width, this.height);
     },
 

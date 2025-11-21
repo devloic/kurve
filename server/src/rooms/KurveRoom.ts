@@ -19,6 +19,7 @@ export class KurveRoom extends Room<GameState> {
   private gameLoopInterval?: NodeJS.Timeout;
   private fps = 60;
   private intervalTimeout = Math.round(1000 / this.fps);
+  private clientScreenSizes = new Map<string, { width: number; height: number }>();
 
   onCreate(options: any) {
     this.setState(new GameState());
@@ -126,6 +127,16 @@ export class KurveRoom extends Room<GameState> {
         this.startGameLoop();
       }
     });
+
+    // Handle screen size from clients
+    this.onMessage('screenSize', (client, message) => {
+      console.log(`Received screen size from ${client.sessionId}: ${message.width}x${message.height}`);
+      this.clientScreenSizes.set(client.sessionId, {
+        width: message.width,
+        height: message.height
+      });
+      this.calculateAndBroadcastFieldSize();
+    });
   }
 
   onJoin(client: Client, options: any) {
@@ -169,6 +180,10 @@ export class KurveRoom extends Room<GameState> {
     if (player) {
       this.state.players.delete(client.sessionId);
 
+      // Remove screen size
+      this.clientScreenSizes.delete(client.sessionId);
+      this.calculateAndBroadcastFieldSize();
+
       // Recalculate max points
       this.state.maxPoints = Math.max(1, this.state.players.size - 1) * 10;
 
@@ -200,6 +215,27 @@ export class KurveRoom extends Room<GameState> {
       this.gameLoopInterval = undefined;
     }
     this.state.isRunning = false;
+  }
+
+  private calculateAndBroadcastFieldSize() {
+    if (this.clientScreenSizes.size === 0) return;
+
+    let maxWidth = 0;
+    let maxHeight = 0;
+
+    // Find maximum width and height across all clients
+    this.clientScreenSizes.forEach((size) => {
+      if (size.width > maxWidth) maxWidth = size.width;
+      if (size.height > maxHeight) maxHeight = size.height;
+    });
+
+    console.log(`Calculated max field size: ${maxWidth}x${maxHeight} from ${this.clientScreenSizes.size} clients`);
+
+    // Broadcast to all clients
+    this.broadcast('setFieldSize', {
+      width: maxWidth,
+      height: maxHeight
+    });
   }
 
   private checkRoundEnd() {

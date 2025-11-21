@@ -37,6 +37,7 @@ Kurve.Menu = {
         this.addMouseListeners();
         this.initMenuMusic();
         this.initNicknameInput();
+        this.initDebugFreezeCheckbox();
 
         // Initialize multiplayer
         if (Kurve.Multiplayer) {
@@ -67,6 +68,27 @@ Kurve.Menu = {
         const nicknameInput = document.getElementById('player-nickname');
         const nickname = nicknameInput ? nicknameInput.value.trim() : '';
         return nickname || 'Player';
+    },
+
+    initDebugFreezeCheckbox: function() {
+        const freezeCheckbox = document.getElementById('debug-freeze-checkbox');
+        if (!freezeCheckbox) return;
+
+        // Load saved freeze state
+        const savedFreezeState = Kurve.Storage.get('kurve.debug-freeze');
+        if (savedFreezeState === 'true') {
+            freezeCheckbox.checked = true;
+        }
+
+        // Save freeze state on change
+        freezeCheckbox.addEventListener('change', function() {
+            Kurve.Storage.set('kurve.debug-freeze', freezeCheckbox.checked.toString());
+        });
+    },
+
+    getDebugFreezeState: function() {
+        const freezeCheckbox = document.getElementById('debug-freeze-checkbox');
+        return freezeCheckbox ? freezeCheckbox.checked : false;
     },
         
     initPlayerMenu: function() {

@@ -153,8 +153,9 @@ Kurve.Game = {
     
     startGame: function() {
         this.maxPoints = (this.curves.length - 1) * 10;
-        
+
         this.addPlayers();
+        this.applyDebugFreezeState();
         this.addWindowListeners();
         this.renderPlayerScores();
 
@@ -163,11 +164,27 @@ Kurve.Game = {
     
     renderPlayerScores: function() {
         var playerHTML  = '';
-        
+
         this.players.sort(this.playerSorting);
         this.players.forEach(function(player) { playerHTML += player.renderScoreItem() });
-        
+
+        // Add version number at the bottom
+        playerHTML += '<div style="text-align: center; margin-top: 20px; font-size: 32px; font-weight: bold; color: #95a5a6;">' + Kurve.Config.version + '</div>';
+
         this.playerScoresElement.innerHTML = playerHTML;
+    },
+
+    applyDebugFreezeState: function() {
+        // Apply freeze state from menu checkbox to local player
+        if (Kurve.Menu && Kurve.Menu.getDebugFreezeState) {
+            var freezeState = Kurve.Menu.getDebugFreezeState();
+            this.players.forEach(function(player) {
+                if (player.isLocal) {
+                    player.setFrozen(freezeState);
+                    console.log('Applied debug freeze state to local player:', freezeState);
+                }
+            });
+        }
     },
     
     playerSorting: function(playerA, playerB) {
@@ -262,7 +279,12 @@ Kurve.Game = {
         this.runningCurves  = {};
         this.incrementSuperpowers();
         this.Audio.terminateRound();
-        Kurve.Field.resize();
+
+        // Only resize field in local mode, not in multiplayer where server controls field size
+        if (!Kurve.Multiplayer || !Kurve.Multiplayer.isMultiplayerMode) {
+            Kurve.Field.resize();
+        }
+
         this.checkForWinner();
     },
 
